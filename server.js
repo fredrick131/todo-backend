@@ -22,13 +22,18 @@ const taskSchema = new mongoose.Schema({
 
 const Task = mongoose.model("Task", taskSchema);
 
-// GET
+// TEST ROUTE
+app.get("/", (req, res) => {
+  res.send("Backend Running ✅");
+});
+
+// GET TASKS
 app.get("/api/tasks", async (req, res) => {
   const tasks = await Task.find();
   res.json(tasks);
 });
 
-// ADD
+// ADD TASK
 app.post("/api/tasks", async (req, res) => {
   await Task.create({ task: req.body.task });
 
@@ -46,7 +51,7 @@ app.put("/api/tasks/:id", async (req, res) => {
   res.json(tasks);
 });
 
-// DELETE
+// DELETE TASK
 app.delete("/api/tasks/:id", async (req, res) => {
   await Task.findByIdAndDelete(req.params.id);
 
@@ -54,7 +59,7 @@ app.delete("/api/tasks/:id", async (req, res) => {
   res.json(tasks);
 });
 
-// 🔥 FIXED PART ONLY (Render compatible)
+// PORT
 const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
