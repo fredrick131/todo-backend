@@ -5,63 +5,83 @@ require("dotenv").config();
 
 const app = express();
 
+/* ---------------- MIDDLEWARE ---------------- */
 app.use(cors());
 app.use(express.json());
 
-// MongoDB connect
-mongoose
-  .connect(process.env.MONGO_URL)
-  .then(() => console.log("MongoDB Connected ✅"))
-  .catch((err) => console.log(err));
+/* ---------------- MONGODB CONNECT ---------------- */
+mongoose.connect(process.env.MONGO_URL)
+.then(() => {
+  console.log("✅ MongoDB Connected");
+})
+.catch((err) => {
+  console.log("❌ MongoDB Error:", err.message);
+});
 
-// Schema
+/* ---------------- SCHEMA ---------------- */
 const taskSchema = new mongoose.Schema({
-  task: String,
-  status: { type: String, default: "pending" },
+  text: String,
+  completed: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const Task = mongoose.model("Task", taskSchema);
 
-// TEST ROUTE
+/* ---------------- ROUTES ---------------- */
+
+// Home route
 app.get("/", (req, res) => {
-  res.send("Backend Running ✅");
+  res.send("Todo Backend + MongoDB Running");
 });
 
-// GET TASKS
-app.get("/api/tasks", async (req, res) => {
+/* GET all tasks */
+app.get("/tasks", async (req, res) => {
   const tasks = await Task.find();
   res.json(tasks);
 });
 
-// ADD TASK
-app.post("/api/tasks", async (req, res) => {
-  await Task.create({ task: req.body.task });
-
-  const tasks = await Task.find();
-  res.json(tasks);
-});
-
-// UPDATE STATUS
-app.put("/api/tasks/:id", async (req, res) => {
-  await Task.findByIdAndUpdate(req.params.id, {
-    status: req.body.status,
+/* ADD task */
+app.post("/tasks", async (req, res) => {
+  const newTask = new Task({
+    text: req.body.text
   });
 
-  const tasks = await Task.find();
-  res.json(tasks);
+  await newTask.save();
+  res.json(newTask);
 });
 
-// DELETE TASK
-app.delete("/api/tasks/:id", async (req, res) => {
+/* DELETE task */
+app.delete("/tasks/:id", async (req, res) => {
   await Task.findByIdAndDelete(req.params.id);
 
-  const tasks = await Task.find();
-  res.json(tasks);
+  res.json({
+    message: "Task deleted successfully"
+  });
 });
 
-// PORT
-const PORT = process.env.PORT || 10000;
+/* TOGGLE complete task */
+app.put("/tasks/:id", async (req, res) => {
+  const task = await Task.findById(req.params.id);
+
+  if (!task) {
+    return res.status(404).json({
+      message: "Task not found"
+    });
+  }
+
+  task.completed = !task.completed;
+
+  await task.save();
+
+  res.json(task);
+});
+
+/* ---------------- SERVER ---------------- */
+
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
